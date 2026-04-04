@@ -1,8 +1,21 @@
 ﻿# Python virtual environment
 .venv/
+venv/
 
 # Data
 data/
+
+# Trained model weights (reproducible by running train.py)
+model.pth
+
+# Root-level plot (canonical copy lives in results/)
+/anomalies.png
+
+# Word documents
+*.docx
+
+# Temp/helper scripts
+get_versions.py
 
 # Python cache
 __pycache__/

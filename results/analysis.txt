@@ -1,0 +1,47 @@
+AAPL Hourly Anomaly Detection — Results
+========================================
+
+26 anomalies detected (threshold: 0.93 MSE)
+
+Full anomaly list:
+  2025-04-03 13:30  error: 1.8372
+  2025-04-04 13:30  error: 1.5159
+  2025-04-07 13:30  error: 7.7223  *** HIGHEST ***
+  2025-04-09 13:30  error: 1.1670
+  2025-04-09 18:30  error: 1.1667
+  2025-04-14 13:30  error: 3.0529
+  2025-05-02 13:30  error: 1.5079
+  2025-05-23 13:30  error: 0.9908
+  2025-06-30 18:30  error: 0.9743
+  2025-07-01 13:30  error: 1.0496
+  2025-08-01 13:30  error: 1.3840
+  2025-08-07 13:30  error: 1.8713
+  2025-08-08 16:30  error: 1.3767
+  2025-09-03 13:30  error: 0.9959
+  2025-09-10 13:30  error: 0.9495
+  2025-09-16 13:30  error: 0.9693
+  2025-09-19 13:30  error: 2.0206
+  2025-09-22 13:30  error: 2.5871
+  2025-09-23 18:30  error: 0.9723
+  2025-10-20 13:30  error: 1.3573
+  2025-10-20 14:30  error: 1.6512
+  2025-10-21 13:30  error: 1.1125
+  2025-10-31 13:30  error: 1.3918
+  2025-12-19 14:30  error: 1.5962
+  2026-01-30 14:30  error: 1.1136
+  2026-02-04 14:30  error: 0.9565
+
+Standout anomalies:
+  Timestamp       Error   Likely cause
+  2025-04-07      7.72    Largest spike — likely the tariff-driven market crash
+  2025-04-14      3.05    Follow-on volatility
+  2025-09-22      2.59    Unusual open/close/volume pattern
+  2025-09-19      2.02    Same cluster
+  2025-08-07      1.87    August volatility
+
+The April 7 bar has an error ~8x the threshold — that's the day AAPL dropped ~5%
+on tariff news, making it the most anomalous bar in the entire year.
+
+The plot (anomalies.png) shows:
+  - Top panel: close price with red dots marking anomalies
+  - Bottom panel: reconstruction error vs threshold line
