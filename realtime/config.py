@@ -1,0 +1,54 @@
+"""
+Central configuration for the real-time anomaly detection system.
+Edit this file to change symbols, connection settings, and alert preferences.
+"""
+
+# ── Symbols to monitor ────────────────────────────────────────────────────────
+SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
+
+# ── IBKR connection ───────────────────────────────────────────────────────────
+IBKR_HOST = "127.0.0.1"
+IBKR_PORT = 4002          # IB Gateway paper: 4002 | live: 4001 | TWS paper: 7497 | live: 7496
+IBKR_CLIENT_ID = 1
+IBKR_TIMEOUT = 30         # seconds to wait for connection
+
+# ── Historical data (used for training) ───────────────────────────────────────
+HIST_DURATION = "1 W"     # how far back to fetch  e.g. "1 W", "2 W", "1 M"
+HIST_BAR_SIZE = "1 min"   # bar resolution for training
+
+# ── Live data ─────────────────────────────────────────────────────────────────
+LIVE_BAR_SIZE = 5         # real-time bar size in seconds (IBKR supports 5s)
+
+# ── Kafka ─────────────────────────────────────────────────────────────────────
+KAFKA_BOOTSTRAP = "localhost:9092"
+HIST_TOPIC_PREFIX = "hist"   # e.g. hist.AAPL
+LIVE_TOPIC_PREFIX = "live"   # e.g. live.AAPL
+ANOMALY_TOPIC    = "anomalies"
+
+# ── Storage ───────────────────────────────────────────────────────────────────
+DATA_DIR   = "realtime/data"    # Parquet files: data/{SYMBOL}/{YYYY-MM-DD}.parquet
+MODELS_DIR = "realtime/models"  # model weights: models/{SYMBOL}.pth
+
+# ── Anomaly detection ─────────────────────────────────────────────────────────
+ANOMALY_THRESHOLD_STD = 3.0    # mean + N * std
+WARMUP_BARS = 10               # minimum bars seen before detecting anomalies
+
+# ── Retraining ────────────────────────────────────────────────────────────────
+RETRAIN_ROLLING_DAYS = 21      # use last N calendar days of Parquet data
+RETRAIN_EPOCHS = 50
+RETRAIN_LR = 1e-3
+RETRAIN_HOUR = 17              # hour (24h) to trigger nightly retrain (5pm ET)
+RETRAIN_MINUTE = 0
+
+# ── Alerts ────────────────────────────────────────────────────────────────────
+DESKTOP_ALERTS = True
+
+# Telegram — set these after creating your bot via @BotFather
+# Leave as None to disable Telegram alerts
+TELEGRAM_BOT_TOKEN = None      # e.g. "123456789:AAF..."
+TELEGRAM_CHAT_ID   = None      # e.g. "987654321"
+
+# ── Streamlit dashboard ───────────────────────────────────────────────────────
+DASHBOARD_PORT = 8501
+DASHBOARD_REFRESH_SECONDS = 5
+DASHBOARD_LOOKBACK_BARS = 200  # how many recent bars to show per symbol
