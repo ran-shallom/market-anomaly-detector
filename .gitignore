@@ -1,4 +1,7 @@
-﻿# Python virtual environment
+﻿# Secrets — never commit
+.env
+
+# Python virtual environment
 .venv/
 venv/
 

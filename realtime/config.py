@@ -1,7 +1,14 @@
 """
 Central configuration for the real-time anomaly detection system.
 Edit this file to change symbols, connection settings, and alert preferences.
+
+Secrets (Telegram token, etc.) are loaded from the .env file in the project
+root — never hardcode them here or commit them to GitHub.
 """
+
+import os
+from dotenv import load_dotenv
+load_dotenv()  # loads .env from project root
 
 # ── Symbols to monitor ────────────────────────────────────────────────────────
 SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
@@ -43,10 +50,9 @@ RETRAIN_MINUTE = 0
 # ── Alerts ────────────────────────────────────────────────────────────────────
 DESKTOP_ALERTS = True
 
-# Telegram — set these after creating your bot via @BotFather
-# Leave as None to disable Telegram alerts
-TELEGRAM_BOT_TOKEN = None      # e.g. "123456789:AAF..."
-TELEGRAM_CHAT_ID   = None      # e.g. "987654321"
+# Telegram — loaded from .env file (never hardcode here)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID")
 
 # ── Streamlit dashboard ───────────────────────────────────────────────────────
 DASHBOARD_PORT = 8501
