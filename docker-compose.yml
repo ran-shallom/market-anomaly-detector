@@ -1,5 +1,3 @@
-version: "3.9"
-
 # Starts Kafka (KRaft mode — no ZooKeeper needed) and a UI to inspect topics.
 #
 # Usage:
@@ -33,7 +31,7 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
     healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
       interval: 10s
       timeout: 5s
       retries: 5
