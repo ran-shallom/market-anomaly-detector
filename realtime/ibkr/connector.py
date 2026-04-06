@@ -80,28 +80,55 @@ def fetch_historical(ib: IB, producer: KafkaProducer, symbol: str):
 
 
 def start_realtime(ib: IB, producer: KafkaProducer, symbols: list):
-    """Subscribe to real-time bars for all symbols and publish to Kafka."""
-
-    def make_handler(symbol):
-        topic = f"{LIVE_TOPIC_PREFIX}.{symbol}"
-        def on_bar(bars, has_new_bar):
-            if has_new_bar:
-                bar = bars[-1]
-                msg = bar_to_dict(symbol, bar)
-                producer.send(topic, msg)
-                log.info(f"Live bar → {topic}: close={bar.close:.2f}")
-        return on_bar
-
+    """
+    Poll the last completed 1-minute bar for each symbol every 60 seconds.
+    Uses reqHistoricalData which works without a real-time market data
+    subscription (paper trading accounts).
+    """
+    contracts = {}
     for symbol in symbols:
         contract = Stock(symbol, "SMART", "USD")
         ib.qualifyContracts(contract)
-        bars = ib.reqRealTimeBars(contract, LIVE_BAR_SIZE, "TRADES", False)
-        bars.updateEvent += make_handler(symbol)
-        log.info(f"Subscribed to real-time bars for {symbol}")
+        contracts[symbol] = contract
+        log.info(f"Ready to poll live bars for {symbol}")
 
-    log.info("Streaming real-time bars. Press Ctrl+C to stop.")
+    # Track last published bar timestamp per symbol to avoid duplicates
+    last_ts: dict = {s: None for s in symbols}
+
+    log.info("Polling for live 1-min bars every 60s. Press Ctrl+C to stop.")
     try:
-        ib.run()
+        while True:
+            for symbol, contract in contracts.items():
+                try:
+                    bars = ib.reqHistoricalData(
+                        contract,
+                        endDateTime="",
+                        durationStr="120 S",
+                        barSizeSetting="1 min",
+                        whatToShow="TRADES",
+                        useRTH=False,
+                        formatDate=1,
+                        keepUpToDate=False,
+                    )
+                    if not bars:
+                        continue
+
+                    # Use the second-to-last bar (last fully completed bar)
+                    bar = bars[-2] if len(bars) >= 2 else bars[-1]
+                    ts = str(bar.date)
+
+                    if ts != last_ts[symbol]:
+                        msg = bar_to_dict(symbol, bar)
+                        producer.send(f"{LIVE_TOPIC_PREFIX}.{symbol}", msg)
+                        producer.flush()
+                        last_ts[symbol] = ts
+                        log.info(f"Live bar → live.{symbol}: {ts} close={bar.close:.2f}")
+
+                except Exception as e:
+                    log.error(f"Error polling {symbol}: {e}")
+
+            ib.sleep(60)   # wait 60 seconds before next poll
+
     except KeyboardInterrupt:
         log.info("Shutting down.")
 

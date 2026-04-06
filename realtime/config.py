@@ -48,7 +48,8 @@ HIST_BAR_SIZE = "1 min"   # bar resolution for training
 LIVE_BAR_SIZE = 5         # real-time bar size in seconds (IBKR supports 5s)
 
 # ── Kafka ─────────────────────────────────────────────────────────────────────
-KAFKA_BOOTSTRAP = "localhost:9092"
+_windows_host = _get_windows_host_ip()
+KAFKA_BOOTSTRAP = f"{_windows_host}:9092"
 HIST_TOPIC_PREFIX = "hist"   # e.g. hist.AAPL
 LIVE_TOPIC_PREFIX = "live"   # e.g. live.AAPL
 ANOMALY_TOPIC    = "anomalies"

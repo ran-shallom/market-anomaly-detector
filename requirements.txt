@@ -10,6 +10,7 @@ pyarrow>=14.0.0          # Parquet read/write
 
 # ── IBKR ──────────────────────────────────────────────────────────────────────
 ib_insync==0.9.86        # async wrapper for IBKR TWS/IB Gateway API
+tzdata>=2024.1           # timezone data required by ib_insync on Linux/WSL
 
 # ── Kafka ─────────────────────────────────────────────────────────────────────
 kafka-python==2.0.2
