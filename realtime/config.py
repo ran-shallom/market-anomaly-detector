@@ -7,14 +7,35 @@ root — never hardcode them here or commit them to GitHub.
 """
 
 import os
+import subprocess
 from dotenv import load_dotenv
 load_dotenv()  # loads .env from project root
+
+
+def _get_windows_host_ip() -> str:
+    """
+    When running inside WSL, IB Gateway runs on the Windows host which is
+    reachable via the default gateway IP — not 127.0.0.1.
+    Falls back to 127.0.0.1 if not running in WSL.
+    """
+    try:
+        result = subprocess.run(
+            ["ip", "route", "show", "default"],
+            capture_output=True, text=True, timeout=3,
+        )
+        # Output: "default via 172.24.208.1 dev eth0 ..."
+        for part in result.stdout.split():
+            if part.count(".") == 3 and part != "0.0.0.0":
+                return part
+    except Exception:
+        pass
+    return "127.0.0.1"
 
 # ── Symbols to monitor ────────────────────────────────────────────────────────
 SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
 
 # ── IBKR connection ───────────────────────────────────────────────────────────
-IBKR_HOST = "127.0.0.1"
+IBKR_HOST = _get_windows_host_ip()  # auto-detects Windows host IP from WSL
 IBKR_PORT = 4002          # IB Gateway paper: 4002 | live: 4001 | TWS paper: 7497 | live: 7496
 IBKR_CLIENT_ID = 1
 IBKR_TIMEOUT = 30         # seconds to wait for connection
