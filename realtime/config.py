@@ -54,6 +54,7 @@ HIST_TOPIC_PREFIX = "hist"   # e.g. hist.AAPL
 LIVE_TOPIC_PREFIX = "live"   # e.g. live.AAPL
 ANOMALY_TOPIC    = "anomalies"
 
+
 # ── Storage ───────────────────────────────────────────────────────────────────
 DATA_DIR   = "realtime/data"    # Parquet files: data/{SYMBOL}/{YYYY-MM-DD}.parquet
 MODELS_DIR = "realtime/models"  # model weights: models/{SYMBOL}.pth

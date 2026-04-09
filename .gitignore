@@ -10,6 +10,7 @@ data/
 
 # Trained model weights (reproducible by running train.py)
 model.pth
+realtime/models/
 
 # Root-level plot (canonical copy lives in results/)
 /anomalies.png
