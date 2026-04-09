@@ -21,6 +21,9 @@ realtime/models/
 # Temp/helper scripts
 get_versions.py
 
+# Setup state (local progress tracking for setup.sh)
+.setup_state
+
 # Python cache
 __pycache__/
 *.pyc
