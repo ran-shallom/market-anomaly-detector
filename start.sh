@@ -283,6 +283,36 @@ if [[ "$SKIP_DASHBOARD" == false ]]; then
             ok "Dashboard is running at http://localhost:8501"
         fi
     fi
+
+    # Wait for at least one Parquet file before opening the browser
+    # so the dashboard shows real data instead of "Waiting for data..."
+    info "Waiting for first price data to arrive (up to 90s)..."
+    DATA_READY=false
+    for i in $(seq 1 90); do
+        if find "$PROJECT_DIR/realtime/data" -name "*.parquet" 2>/dev/null | grep -q .; then
+            DATA_READY=true
+            break
+        fi
+        sleep 1
+    done
+
+    if [[ "$DATA_READY" == true ]]; then
+        ok "Data is ready — opening dashboard in browser..."
+        powershell.exe -Command "Start-Process 'http://localhost:8501'" 2>/dev/null || true
+    else
+        warn "No data yet — open the dashboard manually at http://localhost:8501"
+    fi
+fi
+
+# ── Check Telegram configuration ──────────────────────────────────────────────
+TELEGRAM_STATUS=""
+if [[ -f "$PROJECT_DIR/.env" ]]; then
+    source "$PROJECT_DIR/.env" 2>/dev/null || true
+fi
+if [[ -n "${TELEGRAM_BOT_TOKEN:-}" ]] && [[ "${TELEGRAM_BOT_TOKEN}" != "your_token_here" ]]; then
+    TELEGRAM_STATUS="enabled"
+else
+    TELEGRAM_STATUS="disabled"
 fi
 
 # ── Done ──────────────────────────────────────────────────────────────────────
@@ -294,7 +324,20 @@ echo "  Services:"
 echo "    Connector  → logs/connector.log"
 echo "    Detector   → logs/detector.log"
 echo "    Recorder   → logs/recorder.log"
-[[ "$SKIP_DASHBOARD" == false ]] && echo "    Dashboard  → http://localhost:8501"
+if [[ "$SKIP_DASHBOARD" == false ]]; then
+    echo "    Dashboard  → http://localhost:8501"
+fi
+echo ""
+
+if [[ "$TELEGRAM_STATUS" == "enabled" ]]; then
+    echo -e "  ${GREEN}Alerts:${NC}   Anomaly alerts will be sent to Telegram when detected."
+else
+    echo -e "  ${YELLOW}Alerts:${NC}   Telegram alerts are not configured."
+    echo "            To enable: see SETUP.md → Step 4."
+fi
+echo ""
+echo "  Report:   For historical anomaly analysis, open:"
+echo "            results/AAPL_Anomaly_Report.docx"
 echo ""
 echo "  Commands:"
 echo "    ./status.sh   — check what is running"
