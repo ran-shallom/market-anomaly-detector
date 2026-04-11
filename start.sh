@@ -341,24 +341,8 @@ if [[ "$SKIP_DASHBOARD" == false ]]; then
         fi
     fi
 
-    # Wait for at least one Parquet file before opening the browser
-    # so the dashboard shows real data instead of "Waiting for data..."
-    info "Waiting for first price data to arrive (up to 90s)..."
-    DATA_READY=false
-    for i in $(seq 1 90); do
-        if find "$PROJECT_DIR/realtime/data" -name "*.parquet" 2>/dev/null | grep -q .; then
-            DATA_READY=true
-            break
-        fi
-        sleep 1
-    done
-
-    if [[ "$DATA_READY" == true ]]; then
-        ok "Data is ready — opening dashboard in browser..."
-        powershell.exe -Command "Start-Process 'http://localhost:8501'" 2>/dev/null || true
-    else
-        warn "No data yet — open the dashboard manually at http://localhost:8501"
-    fi
+    ok "Opening dashboard in browser..."
+    powershell.exe -Command "Start-Process 'http://localhost:8501'" 2>/dev/null || true
 fi
 
 # ── Check Telegram configuration ──────────────────────────────────────────────
