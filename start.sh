@@ -199,6 +199,9 @@ if [[ -n "$IBKR_USERNAME" && -n "$IBKR_PASSWORD" && -d "$IBC_PATH" ]]; then
     # IBC is installed and credentials are set — auto-start IB Gateway
     info "IBC found — auto-starting IB Gateway..."
 
+    IBKR_VERSION="${IBKR_VERSION:-1045}"
+    IBKR_DIR="${IBKR_DIR:-C:\\Jts\\ibgateway\\$IBKR_VERSION}"
+
     # Write credentials into IBC config.ini
     IBC_CONFIG="$IBC_PATH/config.ini"
     cat > "$IBC_CONFIG" <<EOF
@@ -208,6 +211,7 @@ FIX=no
 IbLoginId=$IBKR_USERNAME
 IbPassword=$IBKR_PASSWORD
 TradingMode=paper
+IbDir=$IBKR_DIR
 MinimizeMainWindow=yes
 ExistingSessionDetectedAction=manual
 AcceptIncomingConnectionAction=accept
@@ -218,7 +222,7 @@ DismissNSEComplianceNotice=yes
 EOF
 
     # Launch IB Gateway via IBC
-    powershell.exe -Command "Start-Process '$IBC_WIN_PATH\\Scripts\\StartIBGateway.bat' -ArgumentList 'stable' -WindowStyle Minimized" 2>/dev/null || true
+    powershell.exe -Command "Start-Process '$IBC_WIN_PATH\\Scripts\\StartIBC.bat' -ArgumentList '$IBKR_VERSION' -WindowStyle Minimized" 2>/dev/null || true
 
     info "Waiting for IB Gateway to start (up to 60s)..."
     IB_READY=false
