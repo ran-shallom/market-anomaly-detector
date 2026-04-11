@@ -181,7 +181,84 @@ for line in lines:
     done
 fi
 
-# ── Step 2: IBKR Connector ────────────────────────────────────────────────────
+# ── Step 2: Auto-start IB Gateway via IBC (if configured) ────────────────────
+divider
+info "Checking IB Gateway..."
+
+# Load .env to get credentials and IBC path
+if [[ -f "$PROJECT_DIR/.env" ]]; then
+    source "$PROJECT_DIR/.env" 2>/dev/null || true
+fi
+
+IBC_PATH="${IBC_PATH:-/mnt/c/IBC}"
+IBC_WIN_PATH="${IBC_WIN_PATH:-C:\\IBC}"
+IBKR_USERNAME="${IBKR_USERNAME:-}"
+IBKR_PASSWORD="${IBKR_PASSWORD:-}"
+
+if [[ -n "$IBKR_USERNAME" && -n "$IBKR_PASSWORD" && -d "$IBC_PATH" ]]; then
+    # IBC is installed and credentials are set — auto-start IB Gateway
+    info "IBC found — auto-starting IB Gateway..."
+
+    # Write credentials into IBC config.ini
+    IBC_CONFIG="$IBC_PATH/config.ini"
+    cat > "$IBC_CONFIG" <<EOF
+[IBController]
+LogToConsole=no
+FIX=no
+IbLoginId=$IBKR_USERNAME
+IbPassword=$IBKR_PASSWORD
+TradingMode=paper
+MinimizeMainWindow=yes
+ExistingSessionDetectedAction=manual
+AcceptIncomingConnectionAction=accept
+AcceptNonBrokerageAccountWarning=yes
+AutoClosedown=no
+DismissPasswordExpiryWarning=no
+DismissNSEComplianceNotice=yes
+EOF
+
+    # Launch IB Gateway via IBC
+    powershell.exe -Command "Start-Process '$IBC_WIN_PATH\\Scripts\\StartIBGateway.bat' -ArgumentList 'stable' -WindowStyle Minimized" 2>/dev/null || true
+
+    info "Waiting for IB Gateway to start (up to 60s)..."
+    IB_READY=false
+    for i in $(seq 1 60); do
+        sleep 1
+        # Try a quick TCP connect to the IB Gateway port to see if it's up
+        if python3 -c "
+import socket, sys
+s = socket.socket()
+s.settimeout(1)
+try:
+    s.connect(('172.24.208.1', ${IBKR_PORT:-4002}))
+    s.close()
+    sys.exit(0)
+except:
+    sys.exit(1)
+" 2>/dev/null; then
+            IB_READY=true
+            break
+        fi
+    done
+
+    if [[ "$IB_READY" == true ]]; then
+        ok "IB Gateway is running."
+    else
+        warn "IB Gateway did not respond after 60s — it may still be starting up."
+        warn "If login is needed, complete it in the IB Gateway window on Windows."
+    fi
+else
+    # IBC not configured — remind user to start manually
+    if [[ -z "$IBKR_USERNAME" ]] || [[ -z "$IBKR_PASSWORD" ]]; then
+        info "IB Gateway auto-start not configured (no credentials in .env)."
+    else
+        info "IBC not found at $IBC_PATH — skipping auto-start."
+    fi
+    info "Make sure IB Gateway is running on Windows before continuing."
+    info "See SETUP.md → Step 5 for IBC setup instructions."
+fi
+
+# ── Step 3: IBKR Connector ────────────────────────────────────────────────────
 divider
 info "Checking IBKR Connector..."
 
@@ -189,14 +266,29 @@ if is_running "connector"; then
     ok "IBKR Connector is already running."
 else
     info "Starting IBKR Connector..."
+    # Clear old log so we only check fresh output
+    > "$LOGS/connector.log"
     python -m realtime.ibkr.connector >> "$LOGS/connector.log" 2>&1 &
     save_pid $! "connector"
 
-    info "Waiting for IBKR connection (up to 30s)..."
-    if ! wait_for_log "$LOGS/connector.log" "Connected\." 30; then
-        fail "Could not connect to IB Gateway after 30 seconds."
+    info "Waiting for IBKR connection..."
+    IBKR_CONNECTED=false
+    for i in $(seq 1 30); do
+        if grep -q "Connected\." "$LOGS/connector.log" 2>/dev/null; then
+            IBKR_CONNECTED=true
+            break
+        fi
+        # Fail immediately if we see a connection refused error
+        if grep -q "ConnectionRefusedError\|Connect call failed" "$LOGS/connector.log" 2>/dev/null; then
+            break
+        fi
+        sleep 1
+    done
+
+    if [[ "$IBKR_CONNECTED" != true ]]; then
+        fail "Could not connect to IB Gateway."
         echo ""
-        echo "  This usually means IB Gateway is not running on Windows."
+        echo "  This usually means IB Gateway is not running or not logged in."
         echo "  Fix:"
         echo "    1. Open IB Gateway on Windows and log in"
         echo "    2. Go to Configure → Settings → API → Settings"
@@ -204,6 +296,7 @@ else
         echo "    4. Make sure the port is 4002 (paper) or 4001 (live)"
         echo "    5. Re-run this script — Kafka will be skipped (already running)"
         echo ""
+        echo "  To automate IB Gateway login, see SETUP.md → Step 5 (IBC setup)."
         echo "  Connector log: $LOGS/connector.log"
         kill "$(cat "$PIDS/connector.pid")" 2>/dev/null || true
         rm -f "$PIDS/connector.pid"
@@ -219,7 +312,7 @@ else
     fi
 fi
 
-# ── Step 3: Anomaly Detector ──────────────────────────────────────────────────
+# ── Step 4: Anomaly Detector ──────────────────────────────────────────────────
 divider
 info "Checking Anomaly Detector..."
 
@@ -244,7 +337,7 @@ else
     ok "Anomaly Detector is live."
 fi
 
-# ── Step 4: Bar Recorder ──────────────────────────────────────────────────────
+# ── Step 5: Bar Recorder ──────────────────────────────────────────────────────
 divider
 info "Checking Bar Recorder..."
 
@@ -262,7 +355,7 @@ else
     fi
 fi
 
-# ── Step 5: Dashboard ─────────────────────────────────────────────────────────
+# ── Step 6: Dashboard ─────────────────────────────────────────────────────────
 if [[ "$SKIP_DASHBOARD" == false ]]; then
     divider
     info "Checking Streamlit Dashboard..."

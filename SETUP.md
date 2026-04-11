@@ -150,6 +150,34 @@ IB Gateway is the Interactive Brokers desktop app that provides live market data
 
 ---
 
+## Step 5b — (Optional) Auto-login with IBC
+
+By default you need to manually open IB Gateway and log in before running `./start.sh`.
+**IBC** (IB Controller) automates this — it launches IB Gateway and logs in automatically using credentials from your `.env` file.
+
+### Install IBC
+1. Go to [https://github.com/IbcAlpha/IBC/releases](https://github.com/IbcAlpha/IBC/releases)
+2. Download the latest `IBCWin_x.x.x.zip`
+3. Extract it to `C:\IBC` on Windows
+
+### Configure credentials in .env
+Add your IBKR username and password to your `.env` file:
+```
+IBKR_USERNAME=your_ibkr_username
+IBKR_PASSWORD=your_ibkr_password
+```
+
+### How it works
+When you run `./start.sh`, it will:
+1. Detect that IBC is installed at `C:\IBC` and credentials are in `.env`
+2. Write your credentials into `C:\IBC\config.ini`
+3. Launch IB Gateway automatically via IBC
+4. Wait for IB Gateway to be ready before continuing
+
+> **Security note:** Your credentials are stored only in `.env` which is gitignored and never committed to GitHub.
+
+---
+
 ## Step 6 — Start the system
 
 Make sure IB Gateway is running and logged in, then:
