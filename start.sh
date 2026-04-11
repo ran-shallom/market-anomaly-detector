@@ -181,62 +181,18 @@ for line in lines:
     done
 fi
 
-# ── Step 2: Auto-start IB Gateway via IBC (if configured) ────────────────────
+# ── Step 2: IB Gateway check ──────────────────────────────────────────────────
 divider
 info "Checking IB Gateway..."
 
-# Load .env to get credentials and IBC path
+# Load .env
 if [[ -f "$PROJECT_DIR/.env" ]]; then
     source "$PROJECT_DIR/.env" 2>/dev/null || true
 fi
 
-IBC_PATH="${IBC_PATH:-/mnt/c/IBC}"
-IBC_WIN_PATH="${IBC_WIN_PATH:-C:\\IBC}"
-IBKR_USERNAME="${IBKR_USERNAME:-}"
-IBKR_PASSWORD="${IBKR_PASSWORD:-}"
-
-if [[ -n "$IBKR_USERNAME" && -n "$IBKR_PASSWORD" && -d "$IBC_PATH" ]]; then
-    # IBC is installed and credentials are set — auto-start IB Gateway
-    info "IBC found — auto-starting IB Gateway..."
-
-    IBKR_VERSION="${IBKR_VERSION:-1045}"
-    IBKR_DIR="${IBKR_DIR:-C:\\Jts\\ibgateway\\$IBKR_VERSION}"
-
-    # Unblock IBC files (removes Windows SmartScreen warning, safe to run repeatedly)
-    powershell.exe -Command "Get-ChildItem '$IBC_WIN_PATH' -Recurse | Unblock-File" 2>/dev/null || true
-
-    # Write credentials into IBC config.ini
-    IBC_CONFIG="$IBC_PATH/config.ini"
-    cat > "$IBC_CONFIG" <<EOF
-[IBController]
-LogToConsole=no
-FIX=no
-IbLoginId=$IBKR_USERNAME
-IbPassword=$IBKR_PASSWORD
-TradingMode=paper
-IbDir=$IBKR_DIR
-MinimizeMainWindow=yes
-ExistingSessionDetectedAction=manual
-AcceptIncomingConnectionAction=accept
-AcceptNonBrokerageAccountWarning=yes
-AutoClosedown=no
-DismissPasswordExpiryWarning=no
-DismissNSEComplianceNotice=yes
-EOF
-
-    # Launch IB Gateway via IBC using cmd.exe
-    cmd.exe /c "start /min C:\\IBC\\Scripts\\StartIBC.bat $IBKR_VERSION" 2>/dev/null || true
-
-    echo ""
-    warn ">>> If a Windows security warning appears, click RUN to allow IBC to start <<<"
-    echo ""
-
-    info "Waiting for IB Gateway to start (up to 120s)..."
-    IB_READY=false
-    for i in $(seq 1 120); do
-        sleep 1
-        # Try a quick TCP connect to the IB Gateway port to see if it's up
-        if python3 -c "
+# Check if IB Gateway is already responding
+IB_ALREADY_UP=false
+if python3 -c "
 import socket, sys
 s = socket.socket()
 s.settimeout(1)
@@ -247,26 +203,23 @@ try:
 except:
     sys.exit(1)
 " 2>/dev/null; then
-            IB_READY=true
-            break
-        fi
-    done
+    IB_ALREADY_UP=true
+fi
 
-    if [[ "$IB_READY" == true ]]; then
-        ok "IB Gateway is running."
-    else
-        warn "IB Gateway did not respond after 120s — it may still be logging in."
-        warn "Complete the login in the IB Gateway window on Windows, then re-run ./start.sh"
-    fi
+if [[ "$IB_ALREADY_UP" == true ]]; then
+    ok "IB Gateway is already running."
 else
-    # IBC not configured — remind user to start manually
-    if [[ -z "$IBKR_USERNAME" ]] || [[ -z "$IBKR_PASSWORD" ]]; then
-        info "IB Gateway auto-start not configured (no credentials in .env)."
-    else
-        info "IBC not found at $IBC_PATH — skipping auto-start."
-    fi
-    info "Make sure IB Gateway is running on Windows before continuing."
-    info "See SETUP.md → Step 5 for IBC setup instructions."
+    echo ""
+    echo -e "  ${YELLOW}Action required:${NC}"
+    echo "  Please open IB Gateway on Windows and log in."
+    echo "  ─────────────────────────────────────────────"
+    echo "  1. Search for 'IB Gateway' in the Windows Start menu and open it"
+    echo "  2. Log in with your Interactive Brokers credentials"
+    echo "  3. Make sure API is enabled: Configure → Settings → API → Settings"
+    echo "     → 'Enable ActiveX and Socket Clients' must be checked"
+    echo ""
+    read -r -p "  Press Enter once IB Gateway is running and logged in..."
+    echo ""
 fi
 
 # ── Step 3: IBKR Connector ────────────────────────────────────────────────────
