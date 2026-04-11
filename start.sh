@@ -224,12 +224,16 @@ DismissPasswordExpiryWarning=no
 DismissNSEComplianceNotice=yes
 EOF
 
-    # Launch IB Gateway via IBC
-    powershell.exe -Command "Start-Process '$IBC_WIN_PATH\\Scripts\\StartIBC.bat' -ArgumentList '$IBKR_VERSION' -WindowStyle Minimized" 2>/dev/null || true
+    # Launch IB Gateway via IBC using cmd.exe
+    cmd.exe /c "start /min C:\\IBC\\Scripts\\StartIBC.bat $IBKR_VERSION" 2>/dev/null || true
 
-    info "Waiting for IB Gateway to start (up to 60s)..."
+    echo ""
+    warn ">>> If a Windows security warning appears, click RUN to allow IBC to start <<<"
+    echo ""
+
+    info "Waiting for IB Gateway to start (up to 120s)..."
     IB_READY=false
-    for i in $(seq 1 60); do
+    for i in $(seq 1 120); do
         sleep 1
         # Try a quick TCP connect to the IB Gateway port to see if it's up
         if python3 -c "
@@ -251,8 +255,8 @@ except:
     if [[ "$IB_READY" == true ]]; then
         ok "IB Gateway is running."
     else
-        warn "IB Gateway did not respond after 60s — it may still be starting up."
-        warn "If login is needed, complete it in the IB Gateway window on Windows."
+        warn "IB Gateway did not respond after 120s — it may still be logging in."
+        warn "Complete the login in the IB Gateway window on Windows, then re-run ./start.sh"
     fi
 else
     # IBC not configured — remind user to start manually
