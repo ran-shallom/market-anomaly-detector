@@ -202,6 +202,9 @@ if [[ -n "$IBKR_USERNAME" && -n "$IBKR_PASSWORD" && -d "$IBC_PATH" ]]; then
     IBKR_VERSION="${IBKR_VERSION:-1045}"
     IBKR_DIR="${IBKR_DIR:-C:\\Jts\\ibgateway\\$IBKR_VERSION}"
 
+    # Unblock IBC files (removes Windows SmartScreen warning, safe to run repeatedly)
+    powershell.exe -Command "Get-ChildItem '$IBC_WIN_PATH' -Recurse | Unblock-File" 2>/dev/null || true
+
     # Write credentials into IBC config.ini
     IBC_CONFIG="$IBC_PATH/config.ini"
     cat > "$IBC_CONFIG" <<EOF
