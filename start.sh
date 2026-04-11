@@ -87,17 +87,41 @@ ok "Virtual environment activated."
 divider
 info "Checking Kafka..."
 
-if ! command -v docker &>/dev/null; then
-    fail "Docker command not found."
-    echo ""
-    echo "  This is likely because Docker Desktop is not running on Windows."
-    echo "  Fix:"
-    echo "    1. Open Docker Desktop on Windows (search in Start menu)"
-    echo "    2. Wait until the status bar says 'Engine running'"
-    echo "    3. Go to Settings → Resources → WSL Integration and make sure"
-    echo "       your Ubuntu/WSL distro is enabled"
-    echo "    4. Re-run this script"
-    exit 1
+# Auto-start Docker Desktop if docker command is missing or not responding
+if ! command -v docker &>/dev/null || ! docker info &>/dev/null 2>&1; then
+    info "Docker is not running — attempting to start Docker Desktop..."
+    DOCKER_EXE="/mnt/c/Program Files/Docker/Docker/Docker Desktop.exe"
+    if [[ -f "$DOCKER_EXE" ]]; then
+        powershell.exe -Command "Start-Process 'C:\Program Files\Docker\Docker\Docker Desktop.exe'" 2>/dev/null || true
+        info "Waiting for Docker Desktop to start (up to 120s)..."
+        for i in $(seq 1 60); do
+            sleep 2
+            if docker info &>/dev/null 2>&1; then
+                ok "Docker Desktop is running."
+                break
+            fi
+            if (( i == 60 )); then
+                fail "Docker Desktop did not start after 120 seconds."
+                echo ""
+                echo "  Fix:"
+                echo "    1. Open Docker Desktop on Windows manually (search in Start menu)"
+                echo "    2. Wait until the status bar says 'Engine running'"
+                echo "    3. Go to Settings → Resources → WSL Integration and make sure"
+                echo "       your Ubuntu/WSL distro is enabled"
+                echo "    4. Re-run this script"
+                exit 1
+            fi
+        done
+    else
+        fail "Docker Desktop not found and docker command is unavailable."
+        echo ""
+        echo "  Fix:"
+        echo "    1. Install Docker Desktop from https://www.docker.com/products/docker-desktop"
+        echo "    2. During install, enable 'Use WSL 2 based engine'"
+        echo "    3. Go to Settings → Resources → WSL Integration and enable your distro"
+        echo "    4. Re-run this script"
+        exit 1
+    fi
 fi
 
 cd "$PROJECT_DIR"
