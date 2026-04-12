@@ -24,6 +24,9 @@ get_versions.py
 # Runtime logs
 logs/
 
+# PID files (runtime process tracking, created by start.sh)
+.pids/
+
 # Setup state (local progress tracking for setup.sh)
 .setup_state
 
