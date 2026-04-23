@@ -4,7 +4,7 @@ Recorder Consumer
 Subscribes to all hist.* and live.* Kafka topics and writes every bar
 to Parquet files on disk:
 
-    realtime/data/{SYMBOL}/{YYYY-MM-DD}.parquet
+    artifacts/bars/{SYMBOL}/{YYYY-MM-DD}.parquet
 
 Each file is appended to throughout the day and can be read back for
 retraining or later analysis.

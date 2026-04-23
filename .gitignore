@@ -8,9 +8,8 @@ venv/
 # Data
 data/
 
-# Trained model weights (reproducible by running train.py)
-model.pth
-realtime/models/
+# Runtime artifacts (reproducible from source pipelines)
+artifacts/
 
 # Root-level plot (canonical copy lives in results/)
 /anomalies.png

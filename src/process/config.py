@@ -56,8 +56,14 @@ ANOMALY_TOPIC    = "anomalies"
 
 
 # ── Storage ───────────────────────────────────────────────────────────────────
-DATA_DIR   = "realtime/data"    # Parquet files: data/{SYMBOL}/{YYYY-MM-DD}.parquet
-MODELS_DIR = "realtime/models"  # model weights: models/{SYMBOL}.pth
+ARTIFACTS_DIR = "artifacts"
+DATA_DIR   = f"{ARTIFACTS_DIR}/bars"      # Parquet files: bars/{SYMBOL}/{YYYY-MM-DD}.parquet
+MODELS_DIR = f"{ARTIFACTS_DIR}/models"    # model weights: models/{SYMBOL}.pth
+
+# Batch/offline paths
+RAW_DATA_DIR = "data/raw"
+RAW_DATA_PATH = f"{RAW_DATA_DIR}/AAPL_1h.csv"
+BATCH_MODEL_PATH = f"{MODELS_DIR}/batch_autoencoder.pth"
 
 # ── Anomaly detection ─────────────────────────────────────────────────────────
 ANOMALY_THRESHOLD_STD = 3.0    # mean + N * std

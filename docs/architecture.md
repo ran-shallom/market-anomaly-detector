@@ -24,8 +24,8 @@ flowchart LR
     end
 
     subgraph Storage["Storage"]
-        DATA[("Parquet\nrealtime/data")]
-        MODELS[("Model Artifacts\nrealtime/models")]
+        DATA[("Parquet\nartifacts/bars")]
+        MODELS[("Model Artifacts\nartifacts/models")]
     end
 
     subgraph UI["Monitoring UI"]

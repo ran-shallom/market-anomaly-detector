@@ -53,7 +53,7 @@
 
 **Notes:**
 - Current report is at `results/AAPL_Anomaly_Report.docx`
-- Should read from `realtime/data/` instead of the batch CSV
+- Should read from `artifacts/bars/` instead of the batch CSV
 - Could be triggered automatically after nightly retrain
 
 ---

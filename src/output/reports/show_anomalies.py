@@ -3,10 +3,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from src.process.config import RAW_DATA_PATH
 from src.process.pipelines.detect import detect
 
 # Load timestamps
-df = pd.read_csv("data/AAPL_1h.csv", header=0, skiprows=[1, 2], parse_dates=["Price"])
+df = pd.read_csv(RAW_DATA_PATH, header=0, skiprows=[1, 2], parse_dates=["Price"])
 df = df.sort_values("Price").reset_index(drop=True)
 timestamps = df["Price"]
 close = df["Close"].astype(float)

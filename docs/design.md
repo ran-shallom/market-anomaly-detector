@@ -56,9 +56,9 @@ graph TD
     ALERT -->|popup| DESKTOP[Desktop Notification]
     ALERT -->|message| TELEGRAM[Telegram Bot]
 
-    REC -->|Parquet files| DISK[(realtime/data/\nParquet Storage)]
+    REC -->|Parquet files| DISK[(artifacts/bars/\nParquet Storage)]
     DISK -->|rolling 21 days| RETRAIN[Nightly Retrain\nsrc/process/pipelines/retrain.py]
-    RETRAIN -->|updated weights| MODELS[(realtime/models/\n.pth + .scaler)]
+    RETRAIN -->|updated weights| MODELS[(artifacts/models/\n.pth + .scaler)]
     MODELS -->|load on startup| DET
 
     DISK -->|latest bars| DASH
@@ -262,7 +262,7 @@ Abstracts all ML operations so the detector doesn't need to know about PyTorch.
 
 **Key responsibilities:**
 - Maintains one `Autoencoder` + one `StandardScaler` per symbol (in memory)
-- Persists models to `realtime/models/{SYMBOL}.pth` and `.scaler`
+- Persists models to `artifacts/models/{SYMBOL}.pth` and `.scaler`
 - Loads existing models from disk on startup
 - Tracks rolling reconstruction error history per symbol
 - Applies warmup period (first 10 bars ignored) before flagging anomalies
@@ -280,7 +280,7 @@ Silently archives every bar to disk for future retraining.
 
 - Subscribes to all `hist.*` and `live.*` Kafka topics
 - Buffers 10 bars in memory before flushing (reduces disk I/O)
-- Saves to `realtime/data/{SYMBOL}/{YYYY-MM-DD}.parquet`
+- Saves to `artifacts/bars/{SYMBOL}/{YYYY-MM-DD}.parquet`
 - On flush: reads existing file, appends, deduplicates by timestamp, re-saves
 
 ---
@@ -318,7 +318,7 @@ Web-based monitoring UI at `http://localhost:8501`.
   - Latest close price with delta from previous bar
 
 **Data sources:**
-- Price data: reads latest Parquet file from `realtime/data/`
+- Price data: reads latest Parquet file from `artifacts/bars/`
 - Anomaly events: polls `anomalies` Kafka topic (cached 5 seconds)
 
 ---
@@ -353,8 +353,8 @@ python -m src.process.pipelines.retrain --now
 ### File Storage
 
 ```
-realtime/
-├── data/
+artifacts/
+├── bars/
 │   ├── AAPL/
 │   │   ├── 2026-04-01.parquet
 │   │   ├── 2026-04-02.parquet
@@ -546,8 +546,8 @@ graph LR
     IBC --> CFG
 
     subgraph artifacts [Runtime Artifacts]
-        DATA[(realtime/data)]
-        MOD[(realtime/models)]
+        DATA[(artifacts/bars)]
+        MOD[(artifacts/models)]
     end
 
     REC --> DATA
