@@ -6,8 +6,8 @@ import pandas as pd
 import os
 import sys
 
-# Make sure src/ is on the path for all tests
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+# Make sure repo root is on the path for all tests
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 @pytest.fixture

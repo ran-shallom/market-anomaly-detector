@@ -3,12 +3,12 @@ Tests for src/train.py  (training logic, not the full run)
 """
 import torch
 from torch import optim
-from model import Autoencoder
+from src.process.models.autoencoder import Autoencoder
 
 
 def test_loss_decreases_over_epochs(sample_csv):
     """Training for a few epochs should reduce the reconstruction loss."""
-    from preprocess import load_and_preprocess
+    from src.process.features.preprocess import load_and_preprocess
     X, _ = load_and_preprocess(sample_csv)
 
     model = Autoencoder()
@@ -31,7 +31,7 @@ def test_loss_decreases_over_epochs(sample_csv):
 
 def test_model_saves_and_loads(sample_csv, tmp_path):
     """Saved weights should produce identical output when reloaded."""
-    from preprocess import load_and_preprocess
+    from src.process.features.preprocess import load_and_preprocess
     X, _ = load_and_preprocess(sample_csv)
 
     model = Autoencoder()

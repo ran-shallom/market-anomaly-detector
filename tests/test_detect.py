@@ -4,8 +4,8 @@ Tests for src/detect.py  (detection logic, not the full run)
 import torch
 import numpy as np
 import pytest
-from model import Autoencoder
-from preprocess import load_and_preprocess
+from src.process.models.autoencoder import Autoencoder
+from src.process.features.preprocess import load_and_preprocess
 
 
 def _run_detection(csv_path):

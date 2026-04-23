@@ -3,7 +3,7 @@ Tests for src/model.py
 """
 import torch
 import pytest
-from model import Autoencoder
+from src.process.models.autoencoder import Autoencoder
 
 
 def test_forward_output_shape():

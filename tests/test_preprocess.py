@@ -3,7 +3,7 @@ Tests for src/preprocess.py
 """
 import torch
 import pytest
-from preprocess import load_and_preprocess
+from src.process.features.preprocess import load_and_preprocess
 
 
 def test_output_is_tensor(sample_csv):

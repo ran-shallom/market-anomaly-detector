@@ -27,6 +27,8 @@ IBKR Connector → Kafka → Anomaly Detector → Alert (Telegram + Desktop)
 5. **Retrain Scheduler** — retrains models nightly on the last 21 days of data to adapt to changing market conditions
 6. **Streamlit Dashboard** — live web UI showing price charts with anomaly markers
 
+Code is organized into three source layers under `src/`: `input/` (data ingestion), `process/` (modeling/detection), and `output/` (alerts, dashboard, reports).
+
 ## Quick start
 
 ```bash
@@ -35,22 +37,22 @@ git clone https://github.com/ran-shallom/market-anomaly-detector.git
 cd market-anomaly-detector
 
 # 2. Run setup (creates venv, installs packages, starts Kafka)
-./setup.sh
+./scripts/setup.sh
 
 # 3. Start IB Gateway on Windows and log in
 
 # 4. Start everything
-./start.sh
+./scripts/start.sh
 ```
 
-See [SETUP.md](SETUP.md) for full setup instructions including Telegram and IB Gateway configuration.
+See [`docs/setup.md`](docs/setup.md) for full setup instructions including Telegram and IB Gateway configuration.
 
 ## Daily usage
 
 ```bash
-./start.sh    # start all services
-./status.sh   # check what is running
-./stop.sh     # stop all services
+./scripts/start.sh    # start all services
+./scripts/status.sh   # check what is running
+./scripts/stop.sh     # stop all services
 ```
 
 Dashboard: [http://localhost:8501](http://localhost:8501)
@@ -69,10 +71,11 @@ Dashboard: [http://localhost:8501](http://localhost:8501)
 
 ## Configuration
 
-All settings are in [`realtime/config.py`](realtime/config.py) — symbols, thresholds, ports, retrain schedule.
+All settings are in [`src/process/config.py`](src/process/config.py) — symbols, thresholds, ports, retrain schedule.
 Secrets (Telegram token) go in `.env` (see `.env.example`).
 
 ## Documentation
 
-- [SETUP.md](SETUP.md) — installation guide for new machines
-- [DESIGN.md](DESIGN.md) — full architecture documentation with diagrams
+- [`docs/setup.md`](docs/setup.md) — installation guide for new machines
+- [`docs/design.md`](docs/design.md) — full architecture documentation with diagrams
+- [`docs/architecture.md`](docs/architecture.md) — quick architecture diagram
