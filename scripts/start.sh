@@ -217,15 +217,16 @@ fi
 
 # Check if IB Gateway is already responding
 IB_ALREADY_UP=false
-if python3 -c "
+if PYTHONPATH="$PROJECT_DIR" python3 -c "
 import socket, sys
+from src.process.config import IBKR_HOST, IBKR_PORT
 s = socket.socket()
 s.settimeout(1)
 try:
-    s.connect(('172.24.208.1', ${IBKR_PORT:-4002}))
+    s.connect((IBKR_HOST, IBKR_PORT))
     s.close()
     sys.exit(0)
-except:
+except Exception:
     sys.exit(1)
 " 2>/dev/null; then
     IB_ALREADY_UP=true
@@ -277,6 +278,16 @@ else
     if [[ "$IBKR_CONNECTED" != true ]]; then
         fail "Could not connect to IB Gateway."
         echo ""
+        if rg -q "kafka\.vendor\.six\.moves|ModuleNotFoundError.*kafka" "$LOGS/connector.log" 2>/dev/null; then
+            echo "  Detected: Kafka Python client failed to import (not an IB Gateway issue)."
+            echo "  Fix: pip install -r requirements.txt"
+            echo ""
+        fi
+        if rg -q "No module named 'dotenv'|ModuleNotFoundError.*dotenv" "$LOGS/connector.log" 2>/dev/null; then
+            echo "  Detected: missing python-dotenv (connector exits before IB connect)."
+            echo "  Fix: pip install python-dotenv   or   pip install -r requirements.txt"
+            echo ""
+        fi
         echo "  This usually means IB Gateway is not running or not logged in."
         echo "  Fix:"
         echo "    1. Open IB Gateway on Windows and log in"
@@ -285,7 +296,10 @@ else
         echo "    4. Make sure the port is 4002 (paper) or 4001 (live)"
         echo "    5. Re-run this script — Kafka will be skipped (already running)"
         echo ""
-        echo "  To automate IB Gateway login, see docs/setup.md → Step 5 (IBC setup)."
+        echo "  WSL2: If you set Trusted IPs in IB Gateway, add this machine's IP (not the"
+        echo "        Windows gateway). Run: hostname -I | awk '{print \$1}'"
+        echo "        See docs/setup.md → Step 5 §8."
+        echo "  To automate IB Gateway login, see docs/setup.md → Step 5b (IBC setup)."
         echo "  Connector log: $LOGS/connector.log"
         kill "$(cat "$PIDS/connector.pid")" 2>/dev/null || true
         rm -f "$PIDS/connector.pid"
@@ -316,9 +330,15 @@ else
     if ! wait_for_log "$LOGS/detector.log" "Listening for live bars" 300; then
         fail "Detector did not reach live mode after 300 seconds."
         echo ""
-        echo "  This could mean:"
-        echo "    - Historical bars are still being consumed (try waiting a bit and re-running)"
-        echo "    - There is a Kafka connection issue"
+        if rg -q "torch/nn/functional\.py|unicode error.*utf-8|Bad CRC-32.*torch" "$LOGS/detector.log" 2>/dev/null; then
+            echo "  Detected: corrupted or broken PyTorch files under venv (common on /mnt/d/ + WSL)."
+            echo "  Fix: pip uninstall -y torch && pip cache purge && pip install --no-cache-dir torch==2.11.0"
+            echo "    Or clone/copy the repo to ~/ and recreate venv there (Linux filesystem)."
+            echo ""
+        fi
+        echo "  If there is no Traceback above in the log, it may instead be:"
+        echo "    - Historical bars still draining / slow model init"
+        echo "    - A Kafka connectivity issue"
         echo ""
         echo "  Detector log: $LOGS/detector.log"
         exit 1

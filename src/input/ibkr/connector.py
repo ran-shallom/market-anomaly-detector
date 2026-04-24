@@ -15,6 +15,7 @@ import logging
 import time
 from datetime import datetime
 
+import src.kafka_compat  # noqa: F401 — kafka-python 2.0.2 + Python 3.12
 from ib_insync import IB, Stock
 from kafka import KafkaProducer
 

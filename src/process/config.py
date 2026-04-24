@@ -23,7 +23,7 @@ def _get_windows_host_ip() -> str:
             ["ip", "route", "show", "default"],
             capture_output=True, text=True, timeout=3,
         )
-        # Output: "default via 172.24.208.1 dev eth0 ..."
+        # Example: "default via 172.xx.xx.1 dev eth0 ..."
         for part in result.stdout.split():
             if part.count(".") == 3 and part != "0.0.0.0":
                 return part
@@ -48,8 +48,9 @@ HIST_BAR_SIZE = "1 min"   # bar resolution for training
 LIVE_BAR_SIZE = 5         # real-time bar size in seconds (IBKR supports 5s)
 
 # ── Kafka ─────────────────────────────────────────────────────────────────────
-_windows_host = _get_windows_host_ip()
-KAFKA_BOOTSTRAP = f"{_windows_host}:9092"
+# Broker is advertised as localhost:9092 in infra/docker-compose.yml (Docker Desktop / local).
+# IB Gateway stays on the Windows host — use IBKR_HOST (auto-detected in WSL) for that only.
+KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "127.0.0.1:9092")
 HIST_TOPIC_PREFIX = "hist"   # e.g. hist.AAPL
 LIVE_TOPIC_PREFIX = "live"   # e.g. live.AAPL
 ANOMALY_TOPIC    = "anomalies"

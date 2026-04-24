@@ -42,12 +42,34 @@ wsl --install
 This installs WSL 2 with Ubuntu. Restart your computer when prompted.
 After restart, open Ubuntu from the Start menu and create a username and password when asked.
 
-### Python (inside WSL)
-Open a WSL terminal and run:
+### Python 3.12 (inside WSL)
+The project targets **Python 3.12** (same line as **3.12.3** on your laptop). Use `python3.12` for the venv.
+
+**Ubuntu 24.04** (often ships 3.12):
 ```bash
 sudo apt update
-sudo apt install -y python3 python3-pip python3-venv
+sudo apt install -y python3.12 python3.12-venv python3-pip
 ```
+
+**Ubuntu 22.04** (default `python3` is often 3.10 — add Python 3.12 via deadsnakes):
+```bash
+sudo apt update
+sudo apt install -y software-properties-common
+sudo apt install --reinstall python3-apt
+sudo add-apt-repository -y ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install -y python3.12 python3.12-venv
+```
+
+If **`add-apt-repository`** fails with **`No module named 'apt_pkg'`**, APT’s Python bindings are broken or out of sync with your default `python3`. Try, in order:
+
+1. Repair packages: `sudo apt install --reinstall python3-apt software-properties-common` then run `add-apt-repository` again.
+2. Broken upgrade: `sudo apt --fix-broken install` then repeat step 1.
+3. **Wrong `python3`:** If `/usr/bin/python3` was pointed at a non-system Python (pyenv, a manual install), `add-apt-repository` can break. Run `ls -l /usr/bin/python3` — it should be a symlink like `python3 -> python3.10` (distro). Fix with `sudo update-alternatives --config python3` and pick the **/usr/bin/python3.x** from `/usr/lib` (Ubuntu’s), not a custom path.
+
+**If you are actually on Ubuntu 24.04**, use the **Ubuntu 24.04** block above only — **do not** add deadsnakes; `python3.12` is in the default repositories.
+
+If you use **pyenv** or **asdf**, the repo includes **`.python-version`** with `3.12.3` so the right interpreter is selected in the project directory.
 
 ### Cursor (optional — for editing code)
 Download from [https://cursor.sh](https://cursor.sh).
@@ -145,6 +167,15 @@ IB Gateway is the Interactive Brokers desktop app that provides live market data
    - Live trading: `4001`
 7. Click **OK**
 
+8. **If you use WSL2:** Under **Trusted IP Addresses** (same API settings screen), the address must be the **machine that runs the connector** (your Linux side), **not** the Windows host you connect *to*.
+   - **`172.24.208.1`** (or similar) from `ip route` is usually the **Windows host** as seen from WSL — that is where IB Gateway listens. Your Python process connects **to** that IP.
+   - IB Gateway checks the **client source IP** of the TCP connection. That is almost always your **WSL `eth0` IP** (it changes after some WSL restarts). Get it with:
+     ```bash
+     hostname -I | awk '{print $1}'
+     ```
+     Add that value to **Trusted IP Addresses** (or leave the list empty if your IB build allows it and you accept the prompts).
+   - Trusting only `172.24.208.1` is a common mistake: that is the *destination* from WSL’s point of view, not the *source* IB sees for your API client.
+
 > **Note:** The system is configured for paper trading (port 4002) by default.
 > To switch to live trading, change `IBKR_PORT = 4002` to `IBKR_PORT = 4001` in `src/process/config.py`.
 
@@ -215,7 +246,7 @@ Once running, open in your browser: [http://localhost:8501](http://localhost:850
 | Problem | Likely cause | Fix |
 |---------|-------------|-----|
 | `docker: command not found` | Docker Desktop not running | Open Docker Desktop on Windows, wait for "Engine running" |
-| `Could not connect to IB Gateway` | IB Gateway not running or API not enabled | Open IB Gateway, log in, enable API (Step 5) |
+| `Could not connect to IB Gateway` | IB Gateway not running, API disabled, or **Trusted IP** rejects WSL | Step 5; if using WSL, trusted IP must be your **WSL `hostname -I` address**, not the Windows gateway (see Step 5 §8) |
 | `ModuleNotFoundError` | venv not activated or packages not installed | Run `./scripts/setup.sh` again |
 | No Telegram messages | `.env` not configured | Follow Step 4 |
 | Dashboard shows no data | Recorder hasn't saved any Parquet files yet | Wait a few minutes after starting the system |

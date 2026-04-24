@@ -62,53 +62,73 @@ if ! grep -qi microsoft /proc/version 2>/dev/null; then
 fi
 ok "Running inside WSL."
 
-# ── Step 2: Check Python ──────────────────────────────────────────────────────
+# ── Step 2: Check Python (3.12.x — matches e.g. laptop Python 3.12.3) ──────────
 divider
 info "Step 2/7: Checking Python..."
 
 if step_done "python"; then
     ok "Python already verified (skipping)."
 else
-    if ! command -v python3 &>/dev/null; then
-        fail "Python 3 is not installed in WSL."
+    PYTHON_CMD=""
+    if command -v python3.12 &>/dev/null && python3.12 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' 2>/dev/null; then
+        PYTHON_CMD=python3.12
+    elif command -v python3 &>/dev/null && python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' 2>/dev/null; then
+        PYTHON_CMD=python3
+    fi
+
+    if [[ -z "$PYTHON_CMD" ]]; then
+        fail "Python 3.12 is required (project uses 3.12.x, e.g. 3.12.3 on other machines)."
         echo ""
-        echo "  Fix — run these commands in WSL:"
-        echo "    sudo apt update"
-        echo "    sudo apt install -y python3 python3-pip python3-venv"
+        echo "  Fix — Ubuntu 24.04:"
+        echo "    sudo apt update && sudo apt install -y python3.12 python3.12-venv"
+        echo "  Ubuntu 22.04 (deadsnakes):"
+        echo "    sudo apt install -y software-properties-common"
+        echo "    sudo add-apt-repository -y ppa:deadsnakes/ppa"
+        echo "    sudo apt install -y python3.12 python3.12-venv"
+        echo "  Or use pyenv/asdf with .python-version (3.12.3) in the repo root."
         echo "  Then re-run: ./scripts/setup.sh"
         exit 1
     fi
 
-    PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
-    PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
-    PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
-
-    if (( PYTHON_MAJOR < 3 || (PYTHON_MAJOR == 3 && PYTHON_MINOR < 10) )); then
-        fail "Python 3.10 or higher is required. Found: $PYTHON_VERSION"
-        echo ""
-        echo "  Fix — install a newer Python in WSL:"
-        echo "    sudo apt update && sudo apt install -y python3.11 python3.11-venv"
-        exit 1
-    fi
-
-    ok "Python $PYTHON_VERSION found."
+    PYTHON_VERSION=$("$PYTHON_CMD" --version 2>&1 | awk '{print $2}')
+    ok "Python $PYTHON_VERSION ($PYTHON_CMD) — OK for this project."
     mark_done "python"
+fi
+
+# Interpreter used for venv / pip (prefer python3.12 when both exist)
+PYTHON_CMD=""
+if command -v python3.12 &>/dev/null && python3.12 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' 2>/dev/null; then
+    PYTHON_CMD=python3.12
+elif command -v python3 &>/dev/null && python3 -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' 2>/dev/null; then
+    PYTHON_CMD=python3
+else
+    fail "Python 3.12 disappeared from PATH. Re-run from a fresh shell: ./scripts/setup.sh"
+    exit 1
 fi
 
 # ── Step 3: Create virtual environment ───────────────────────────────────────
 divider
 info "Step 3/7: Setting up Python virtual environment..."
 
+if [[ -f "$PROJECT_DIR/venv/bin/python" ]] && ! "$PROJECT_DIR/venv/bin/python" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)' 2>/dev/null; then
+    fail "Existing venv is not Python 3.12.x. Remove it and clear the setup flag, then re-run."
+    echo ""
+    echo "  rm -rf \"$PROJECT_DIR/venv\""
+    echo "  sed -i '/^venv\$/d' \"$PROJECT_DIR/.setup_state\""
+    echo "  ./scripts/setup.sh"
+    exit 1
+fi
+
 if step_done "venv"; then
     ok "Virtual environment already set up (skipping)."
 else
     if [[ ! -f "$PROJECT_DIR/venv/bin/activate" ]]; then
-        info "Creating virtual environment..."
-        python3 -m venv "$PROJECT_DIR/venv" || {
+        info "Creating virtual environment with $PYTHON_CMD..."
+        "$PYTHON_CMD" -m venv "$PROJECT_DIR/venv" || {
             fail "Failed to create virtual environment."
             echo ""
-            echo "  Fix — make sure python3-venv is installed:"
-            echo "    sudo apt install -y python3-venv"
+            echo "  Fix — make sure the venv package for 3.12 is installed:"
+            echo "    sudo apt install -y python3.12-venv"
             echo "  Then re-run: ./scripts/setup.sh"
             exit 1
         }

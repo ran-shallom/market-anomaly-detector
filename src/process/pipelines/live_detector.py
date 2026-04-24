@@ -16,6 +16,8 @@ import logging
 from collections import defaultdict
 
 import pandas as pd
+
+import src.kafka_compat  # noqa: F401 — kafka-python 2.0.2 + Python 3.12
 from kafka import KafkaConsumer, KafkaProducer
 
 from src.process.config import (

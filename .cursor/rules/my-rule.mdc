@@ -1,0 +1,18 @@
+---
+description: "Concise Bullet-Point Summaries with Next Steps"
+globs:
+  - "**/*.*"
+alwaysApply: true
+---
+
+# Understand the situation
+- For every AI response, first summarize the situation in short, concise bullet points.
+
+# Next Steps
+- After the summary, list the next steps in bullet points.
+- Use short, clear sentences for each step.
+- If there's an actionable command or code snippet, provide it.
+
+---
+
+This rule ensures that all AI responses are first distilled into a brief summary and then followed by clearly defined next steps.
