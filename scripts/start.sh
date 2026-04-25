@@ -35,7 +35,67 @@ divider() { echo -e "${CYAN}─────────────────�
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+# True when .env still matches shipped template placeholders (Telegram / IBC-related).
+_env_still_has_template_placeholders() {
+    [[ -f "$PROJECT_DIR/.env" ]] || return 1
+    grep -qE 'your_token_here|your_chat_id_here|your_ibkr_username|your_ibkr_password' \
+        "$PROJECT_DIR/.env" 2>/dev/null
+}
+
+print_env_edit_instructions() {
+    divider
+    info "Edit your .env file — expected values (see also .env.example and docs/setup.md):"
+    echo ""
+    echo "  Telegram (phone alerts; desktop alerts can work without Telegram):"
+    echo "    TELEGRAM_BOT_TOKEN    → from @BotFather after /newbot"
+    echo "    TELEGRAM_CHAT_ID      → from https://api.telegram.org/bot<TOKEN>/getUpdates"
+    echo "    To skip Telegram: set both variables to empty (nothing after the =)."
+    echo ""
+    echo "  Optional — only if defaults do not match your machine:"
+    echo "    KAFKA_BOOTSTRAP       → default 127.0.0.1:9092 (local Docker Kafka)"
+    echo "    IBKR_HOST             → unset on WSL auto-detects Windows host; set for remote Gateway"
+    echo "    IBKR_PORT             → 4002 paper / 4001 live (or use _IBKR_PORT_FALLBACK in config.py)"
+    echo ""
+    echo "  IBC auto-login (docs/setup.md Step 5b) — set real credentials and paths, or to skip IBC:"
+    echo "    set IBKR_USERNAME= and IBKR_PASSWORD= empty if you always log into IB Gateway manually"
+    echo ""
+    echo "  File: $PROJECT_DIR/.env"
+    divider
+}
+
+# Wait for operator after showing .env guidance (prefer /dev/tty when stdin is not the terminal).
+wait_for_enter_after_env_review() {
+    echo ""
+    warn "Waiting — edit .env in another window if needed, then press Enter here to continue."
+    local prompt="  Press Enter to continue... "
+    if [[ -r /dev/tty ]]; then
+        read -r -p "$prompt" _ </dev/tty || true
+    else
+        read -r -p "$prompt" _ || true
+    fi
+    echo ""
+}
+
 mkdir -p "$LOGS" "$PIDS"
+
+# Bootstrap .env after git clone; pause for review if file was missing or still looks like the template.
+if [[ ! -f "$PROJECT_DIR/.env" ]]; then
+    if [[ -f "$PROJECT_DIR/.env.example" ]]; then
+        warn "No .env in project root — copying .env.example → .env"
+        cp "$PROJECT_DIR/.env.example" "$PROJECT_DIR/.env"
+        ok "Created .env from template."
+    else
+        fail "No .env and no .env.example in $PROJECT_DIR — cannot bootstrap."
+        echo ""
+        echo "  Create a .env file (see docs/setup.md), then re-run: ./scripts/start.sh"
+        exit 1
+    fi
+fi
+
+if _env_still_has_template_placeholders; then
+    print_env_edit_instructions
+    wait_for_enter_after_env_review
+fi
 
 is_running() {
     # is_running <name>  — checks if the PID stored in .pids/<name> is alive

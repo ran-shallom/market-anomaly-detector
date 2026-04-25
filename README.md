@@ -35,7 +35,7 @@ Code is organized into three source layers under `src/`: `input/` (data ingestio
 - **Virtual environment** — **required** for normal use: `./scripts/setup.sh` creates `venv/` (gitignored). `./scripts/start.sh` expects that layout and `pip install -r requirements.txt` inside it.
 - **Docker** — for local Kafka (`infra/docker-compose.yml`), started by setup/start scripts.
 - **WSL** — `./scripts/setup.sh` is written for **WSL on Windows** (IB Gateway on the host). On a **native Linux** machine, use Python 3.12 + `python3.12 -m venv venv`, `pip install -r requirements.txt`, and Docker Compose manually; see [`docs/design.md`](docs/design.md) §8.
-- **`.env`** — copy from [`.env.example`](.env.example); not committed. Telegram and optional `IBKR_*` / `KAFKA_BOOTSTRAP` go there.
+- **`.env`** — not committed. **`./scripts/start.sh` copies `.env.example` → `.env` if missing.** If `.env` still contains template placeholders, the script **prints a checklist, says it is waiting, and continues only after you press Enter** (you may edit `.env` first or continue as-is). See [`.env.example`](.env.example) and [`docs/setup.md`](docs/setup.md).
 
 ## Quick start
 
@@ -49,7 +49,7 @@ cd market-anomaly-detector
 
 # 3. Start IB Gateway on Windows and log in
 
-# 4. Start everything
+# 4. Start everything (if .env is new or still templated, start.sh waits for Enter after showing hints)
 ./scripts/start.sh
 ```
 
