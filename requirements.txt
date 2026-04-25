@@ -1,3 +1,7 @@
+# Python: 3.12.x required (kafka-python 2.0.2 compat shim, setup.sh, .python-version).
+# After git pull: create venv with 3.12, then: pip install -r requirements.txt
+# See docs/setup.md and README Prerequisites.
+
 # ── Core ML ───────────────────────────────────────────────────────────────────
 torch==2.11.0
 scikit-learn==1.8.0

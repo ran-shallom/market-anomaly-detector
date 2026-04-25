@@ -29,6 +29,14 @@ IBKR Connector → Kafka → Anomaly Detector → Alert (Telegram + Desktop)
 
 Code is organized into three source layers under `src/`: `input/` (data ingestion), `process/` (modeling/detection), and `output/` (alerts, dashboard, reports).
 
+## Prerequisites
+
+- **Python 3.12.x** — enforced by `./scripts/setup.sh` and recorded in [`.python-version`](.python-version) for pyenv/asdf. `requirements.txt` does not pin the interpreter; pins are for **pip packages** only.
+- **Virtual environment** — **required** for normal use: `./scripts/setup.sh` creates `venv/` (gitignored). `./scripts/start.sh` expects that layout and `pip install -r requirements.txt` inside it.
+- **Docker** — for local Kafka (`infra/docker-compose.yml`), started by setup/start scripts.
+- **WSL** — `./scripts/setup.sh` is written for **WSL on Windows** (IB Gateway on the host). On a **native Linux** machine, use Python 3.12 + `python3.12 -m venv venv`, `pip install -r requirements.txt`, and Docker Compose manually; see [`docs/design.md`](docs/design.md) §8.
+- **`.env`** — copy from [`.env.example`](.env.example); not committed. Telegram and optional `IBKR_*` / `KAFKA_BOOTSTRAP` go there.
+
 ## Quick start
 
 ```bash
