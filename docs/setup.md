@@ -176,8 +176,7 @@ IB Gateway is the Interactive Brokers desktop app that provides live market data
      Add that value to **Trusted IP Addresses** (or leave the list empty if your IB build allows it and you accept the prompts).
    - Trusting only `172.24.208.1` is a common mistake: that is the *destination* from WSL’s point of view, not the *source* IB sees for your API client.
 
-> **Note:** The system is configured for paper trading (port 4002) by default.
-> To switch to live trading, change `IBKR_PORT = 4002` to `IBKR_PORT = 4001` in `src/process/config.py`.
+> **Note:** The system uses IB Gateway **paper** port **4002** by default (`IBKR_PORT` in `config.py`, or set `IBKR_PORT=4001` in `.env` for live).
 
 ---
 
@@ -256,12 +255,14 @@ Once running, open in your browser: [http://localhost:8501](http://localhost:850
 
 ## Configuration
 
-All system settings are in [`src/process/config.py`](src/process/config.py).
-Key settings you may want to change:
+Defaults live in [`src/process/config.py`](src/process/config.py); **`IBKR_HOST`**, **`IBKR_PORT`**, **`KAFKA_BOOTSTRAP`**, and Telegram keys can be set in **`.env`** (see [`.env.example`](../.env.example)).
+Key settings:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `SYMBOLS` | AAPL, MSFT, GOOGL, AMZN, TSLA | Stocks to monitor |
-| `IBKR_PORT` | `4002` | Change to `4001` for live trading |
+| `KAFKA_BOOTSTRAP` | `127.0.0.1:9092` | Optional in `.env`; must match your Kafka advertised listener |
+| `IBKR_HOST` | auto | Optional in `.env`. WSL: Windows host via default route if unset. Native Linux/macOS: `127.0.0.1` if unset. Set explicitly for remote Gateway. |
+| `IBKR_PORT` | `4002` | Set `IBKR_PORT` in `.env`, or change `_IBKR_PORT_FALLBACK` in `config.py` (e.g. `4001` live) |
 | `ANOMALY_THRESHOLD_STD` | `3.0` | Lower = more alerts, higher = fewer |
 | `RETRAIN_HOUR` | `17` | Hour (UTC) for nightly model retraining |

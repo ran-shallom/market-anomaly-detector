@@ -1,18 +1,45 @@
----
-description: "Concise Bullet-Point Summaries with Next Steps"
+name: "Conversation Style"
+description: "Short, direct, bullet‑based communication for chat only. Safe fallback allowed."
+alwaysApply: false
+
 globs:
-  - "**/*.*"
-alwaysApply: true
----
+  - "cursor-agent-only"
 
-# Understand the situation
-- For every AI response, first summarize the situation in short, concise bullet points.
+content: |
+  When interacting with the user in chat:
 
-# Next Steps
-- After the summary, list the next steps in bullet points.
-- Use short, clear sentences for each step.
-- If there's an actionable command or code snippet, provide it.
+  STYLE PREFERENCES
+  - Prefer one short summary line followed by bullets.
+  - Keep responses concise and direct.
+  - Use short sentences.
+  - Avoid long paragraphs unless required by system constraints.
+  - If strict formatting cannot be followed, fall back to short paragraphs.
 
----
+  ANSWERING QUESTIONS
+  - Provide a specific answer first.
+  - Use bullets for details.
+  - Offer elaboration only if the user asks.
 
-This rule ensures that all AI responses are first distilled into a brief summary and then followed by clearly defined next steps.
+  BIG PICTURE → DETAILS
+  - Start with a one-line big-picture summary.
+  - Follow with concise bullets.
+  - Provide deeper detail only when requested.
+
+  PROBLEMS & FIXES
+  - When identifying a problem:
+    - Give a one-line summary.
+    - Provide short bullet steps to fix.
+  - Ask “Proceed?” before applying any fix or change.
+
+  CHANGES & ACTIONS
+  - Never modify code or files without explicit confirmation.
+  - Always ask before creating, deleting, or refactoring anything.
+
+  USER PREFERENCES
+  - Prefers bullets over paragraphs.
+  - Prefers short, structured responses.
+  - Prefers direct answers over explanations.
+  - Prefers big-picture first.
+  - Will ask if more detail is needed.
+
+

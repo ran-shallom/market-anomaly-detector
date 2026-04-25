@@ -2,10 +2,14 @@
 Nightly Retrain Scheduler
 =========================
 Runs as a long-lived background process.
-Every day at RETRAIN_HOUR:RETRAIN_MINUTE (default 5:00pm ET), it:
+Every day at RETRAIN_HOUR:RETRAIN_MINUTE in UTC (defaults from config: 17:00 UTC), it:
   1. Reads the last RETRAIN_ROLLING_DAYS of Parquet files for each symbol
   2. Retrains the autoencoder from scratch on that window
   3. Saves the new model weights — the detector picks these up automatically
+
+Scheduling uses ``datetime.now(timezone.utc)`` — there is no automatic US/Eastern
+conversion. To hit a given local time, set ``RETRAIN_HOUR`` / ``RETRAIN_MINUTE`` in
+``src/process/config.py`` to the matching UTC values.
 
 Run:
     python -m src.process.pipelines.retrain
@@ -84,7 +88,7 @@ def retrain_all(manager: ModelManager):
 
 
 def seconds_until_next_retrain() -> float:
-    """Return seconds until the next scheduled retrain time."""
+    """Seconds until the next scheduled run, using UTC wall time (see ``main``)."""
     now = datetime.now(timezone.utc)
     target = now.replace(
         hour=RETRAIN_HOUR,

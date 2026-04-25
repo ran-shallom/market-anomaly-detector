@@ -20,7 +20,7 @@ IBKR Connector → Kafka → Anomaly Detector → Alert (Telegram + Desktop)
                         Nightly Retrain (keeps models current)
 ```
 
-1. **IBKR Connector** — connects to IB Gateway and streams live 1-minute price bars into Kafka
+1. **IBKR Connector** — connects to IB Gateway, publishes one week of **1-minute** historical bars per symbol, then streams **5-second** live bars into Kafka (see `LIVE_BAR_SIZE` / `HIST_BAR_SIZE` in `src/process/config.py`)
 2. **Anomaly Detector** — trains one autoencoder per symbol on historical bars, then scores each live bar. Flags anything beyond mean + 3× standard deviation as an anomaly
 3. **Alert Service** — sends a Telegram message and desktop notification when an anomaly is detected
 4. **Bar Recorder** — saves all bars to Parquet files for retraining
@@ -71,8 +71,8 @@ Dashboard: [http://localhost:8501](http://localhost:8501)
 
 ## Configuration
 
-All settings are in [`src/process/config.py`](src/process/config.py) — symbols, thresholds, ports, retrain schedule.
-Secrets (Telegram token) go in `.env` (see `.env.example`).
+Most defaults are in [`src/process/config.py`](src/process/config.py) — symbols, thresholds, retrain schedule, and IBKR defaults.
+Optional overrides (`KAFKA_BOOTSTRAP`, `IBKR_HOST`, `IBKR_PORT`, Telegram) go in `.env` (see `.env.example`).
 
 ## Documentation
 

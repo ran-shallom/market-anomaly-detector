@@ -80,7 +80,7 @@ graph TD
 | Retrain Scheduler | `src/process/pipelines/retrain.py` | Nightly retraining on rolling 21-day data window |
 | Dashboard | `src/output/dashboard/app.py` | Streamlit web UI with live charts and anomaly feed |
 | Config | `src/process/config.py` | Central configuration — symbols, ports, thresholds, secrets |
-| Autoencoder | `src/model.py` | Neural network definition (used by both batch and realtime systems) |
+| Autoencoder | `src/process/models/autoencoder.py` | Neural network definition (used by batch and realtime pipelines) |
 
 ---
 
@@ -163,8 +163,8 @@ sequenceDiagram
     participant DISK as Parquet Storage
     participant MGR as ModelManager
 
-    loop Every day at 5pm UTC
-        SCHED->>SCHED: Wait until 17:00 UTC
+    loop Every day at 17:00 UTC (default RETRAIN_HOUR)
+        SCHED->>SCHED: Wait until RETRAIN_HOUR:RETRAIN_MINUTE UTC
         loop For each symbol
             SCHED->>DISK: Load last 21 days of Parquet files
             DISK-->>SCHED: DataFrame of bars
@@ -179,7 +179,7 @@ sequenceDiagram
 
 ## 5. Component Details
 
-### 5.1 Autoencoder (`src/model.py`)
+### 5.1 Autoencoder (`src/process/models/autoencoder.py`)
 
 The neural network that powers anomaly detection. It learns to compress and reconstruct normal price bars. Unusual bars reconstruct poorly, producing high error.
 
@@ -328,7 +328,7 @@ Web-based monitoring UI at `http://localhost:8501`.
 Keeps models current as market conditions change.
 
 - Runs as a daemon process
-- Each day at `RETRAIN_HOUR:RETRAIN_MINUTE` (default 17:00 UTC):
+- Each day at `RETRAIN_HOUR:RETRAIN_MINUTE` interpreted in **UTC** (default 17:00 UTC from `config.py`); not US Eastern unless you set the hour/minute to match in UTC
   - Loads last `RETRAIN_ROLLING_DAYS` (default 21) calendar days of Parquet data per symbol
   - Retrains `ModelManager` for each symbol
   - New weights are immediately used by the detector on next bar
@@ -379,12 +379,14 @@ artifacts/
 
 ## 7. Configuration Reference
 
-All settings are in [`src/process/config.py`](src/process/config.py). Secrets are loaded from `.env` in the project root.
+Most defaults are in [`src/process/config.py`](src/process/config.py). Secrets and optional overrides (`KAFKA_BOOTSTRAP`, `IBKR_HOST`, `IBKR_PORT`, Telegram) load from `.env` in the project root (see `.env.example`).
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `SYMBOLS` | `["AAPL","MSFT","GOOGL","AMZN","TSLA"]` | Symbols to monitor |
-| `IBKR_PORT` | `4002` | IB Gateway port (4002=paper, 4001=live) |
+| `KAFKA_BOOTSTRAP` | from `.env` or `127.0.0.1:9092` | Kafka bootstrap servers |
+| `IBKR_HOST` | from `.env` or auto | WSL → Windows host; native → `127.0.0.1`; override for remote Gateway |
+| `IBKR_PORT` | from `.env` or `_IBKR_PORT_FALLBACK` in `config.py` | IB Gateway port (4002=paper, 4001=live) |
 | `HIST_DURATION` | `"1 W"` | Historical data window for training |
 | `HIST_BAR_SIZE` | `"1 min"` | Bar resolution for training |
 | `LIVE_BAR_SIZE` | `5` | Live bar polling interval (seconds) |
@@ -414,7 +416,7 @@ All settings are in [`src/process/config.py`](src/process/config.py). Secrets ar
 **Step 1 — IB Gateway (Windows, manual)**
 Open IB Gateway, log in, and ensure:
 - API → Settings → "Enable ActiveX and Socket Clients" is checked
-- Socket port matches `IBKR_PORT` in config (default 4002)
+- Socket port matches `IBKR_PORT` from `.env` or `config.py` (default 4002)
 
 **Step 2 — Kafka (PowerShell or any terminal)**
 ```bash
@@ -425,7 +427,7 @@ Kafka UI available at `http://localhost:8080`
 
 **Step 3 — IBKR Connector (WSL terminal 1)**
 ```bash
-cd /mnt/c/Users/RanSh/Documents/Programming/Cursor/market-anomaly-detector
+cd /path/to/market-anomaly-detector   # your clone, e.g. ~/market-anomaly-detector
 source venv/bin/activate
 python -m src.input.ibkr.connector
 ```

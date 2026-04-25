@@ -11,7 +11,7 @@ Setup for Telegram:
   3. Start a chat with your new bot, then visit:
        https://api.telegram.org/bot<TOKEN>/getUpdates
      to find your chat_id
-  4. Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in src/process/config.py
+  4. Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in the project root `.env` (see `.env.example`)
 
 Usage:
     from src.output.alerts.service import AlertService

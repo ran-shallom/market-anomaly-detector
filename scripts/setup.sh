@@ -201,7 +201,7 @@ for line in lines:
         s = json.loads(line)
         if s.get('Service') == 'kafka':
             print(s.get('Health', s.get('State', 'unknown')))
-    except:
+    except Exception:
         pass
 " 2>/dev/null || echo "unknown")
 
@@ -222,7 +222,7 @@ for line in lines:
         s = json.loads(line)
         if s.get('Service') == 'kafka':
             print(s.get('Health', s.get('State', 'unknown')))
-    except:
+    except Exception:
         pass
 " 2>/dev/null || echo "unknown")
             [[ "$STATUS" == "healthy" ]] && break
@@ -259,7 +259,7 @@ for line in lines:
         s = json.loads(line)
         if s.get('Service') == 'kafka':
             print(s.get('Health', s.get('State', 'unknown')))
-    except:
+    except Exception:
         pass
 " 2>/dev/null || echo "unknown")
         [[ "$STATUS" == "healthy" ]] && break

@@ -12,11 +12,20 @@ from dotenv import load_dotenv
 load_dotenv()  # loads .env from project root
 
 
+def _running_in_wsl() -> bool:
+    """True when Linux is running under WSL (IB Gateway is typically on the Windows host)."""
+    try:
+        with open("/proc/sys/kernel/osrelease", encoding="utf-8") as f:
+            rel = f.read().lower()
+        return "microsoft" in rel or "wsl" in rel
+    except OSError:
+        return False
+
+
 def _get_windows_host_ip() -> str:
     """
-    When running inside WSL, IB Gateway runs on the Windows host which is
-    reachable via the default gateway IP — not 127.0.0.1.
-    Falls back to 127.0.0.1 if not running in WSL.
+    Default-route gateway IP as seen from WSL — usually the Windows host where
+    IB Gateway listens. If ``ip route`` is missing or unparsable, returns 127.0.0.1.
     """
     try:
         result = subprocess.run(
@@ -31,12 +40,35 @@ def _get_windows_host_ip() -> str:
         pass
     return "127.0.0.1"
 
+
+def _default_ibkr_host() -> str:
+    """WSL → Windows gateway; native Linux/macOS → local host (override with IBKR_HOST if needed)."""
+    if _running_in_wsl():
+        return _get_windows_host_ip()
+    return "127.0.0.1"
+
+
+def _env_int(name: str, default: int) -> int:
+    """Parse optional positive int from environment; invalid or empty → default."""
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        v = int(raw, 10)
+    except ValueError:
+        return default
+    return v if v > 0 else default
+
+
 # ── Symbols to monitor ────────────────────────────────────────────────────────
 SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
 
 # ── IBKR connection ───────────────────────────────────────────────────────────
-IBKR_HOST = _get_windows_host_ip()  # auto-detects Windows host IP from WSL
-IBKR_PORT = 4002          # IB Gateway paper: 4002 | live: 4001 | TWS paper: 7497 | live: 7496
+# Set IBKR_HOST / IBKR_PORT in .env for remote Gateway or paper vs live (see .env.example).
+# If IBKR_PORT is unset in .env, this fallback applies (change here for live: 4001).
+_IBKR_PORT_FALLBACK = 4002
+IBKR_HOST = (os.getenv("IBKR_HOST") or "").strip() or _default_ibkr_host()
+IBKR_PORT = _env_int("IBKR_PORT", _IBKR_PORT_FALLBACK)
 IBKR_CLIENT_ID = 1
 IBKR_TIMEOUT = 30         # seconds to wait for connection
 
@@ -74,7 +106,8 @@ WARMUP_BARS = 10               # minimum bars seen before detecting anomalies
 RETRAIN_ROLLING_DAYS = 21      # use last N calendar days of Parquet data
 RETRAIN_EPOCHS = 50
 RETRAIN_LR = 1e-3
-RETRAIN_HOUR = 17              # hour (24h) to trigger nightly retrain (5pm ET)
+# Daily retrain fires at this wall time in UTC (see retrain.py). Default 17:00 UTC.
+RETRAIN_HOUR = 17              # 0–23, interpreted in UTC, not exchange local time
 RETRAIN_MINUTE = 0
 
 # ── Alerts ────────────────────────────────────────────────────────────────────
